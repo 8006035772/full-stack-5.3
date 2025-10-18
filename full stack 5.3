@@ -1,0 +1,88 @@
+// File: ecommerce.js
+
+const mongoose = require("mongoose");
+
+async function main() {
+  try {
+    // 1. Connect to MongoDB
+    await mongoose.connect("mongodb://127.0.0.1:27017/ecommerceDB", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB!");
+
+    // 2. Define schema
+    const variantSchema = new mongoose.Schema({
+      color: String,
+      size: String,
+      stock: Number,
+    });
+
+    const productSchema = new mongoose.Schema({
+      name: String,
+      price: Number,
+      category: String,
+      variants: [variantSchema],
+    });
+
+    const Product = mongoose.model("Product", productSchema);
+
+    // 3. Insert sample products
+    await Product.deleteMany({}); // Clear existing products
+
+    await Product.insertMany([
+      {
+        name: "T-Shirt",
+        price: 499,
+        category: "Clothing",
+        variants: [
+          { color: "Red", size: "M", stock: 10 },
+          { color: "Blue", size: "L", stock: 5 },
+        ],
+      },
+      {
+        name: "Running Shoes",
+        price: 2999,
+        category: "Footwear",
+        variants: [
+          { color: "Black", size: "9", stock: 7 },
+          { color: "White", size: "10", stock: 4 },
+        ],
+      },
+      {
+        name: "Smartphone",
+        price: 19999,
+        category: "Electronics",
+        variants: [
+          { color: "Black", size: "128GB", stock: 15 },
+          { color: "Blue", size: "256GB", stock: 8 },
+        ],
+      },
+    ]);
+    console.log("Sample products inserted!");
+
+    // 4. Retrieve all products
+    const allProducts = await Product.find();
+    console.log("\nAll Products:");
+    console.log(allProducts);
+
+    // 5. Filter products by category
+    const clothingProducts = await Product.find({ category: "Clothing" });
+    console.log("\nProducts in Clothing category:");
+    console.log(clothingProducts);
+
+    // 6. Project specific variant details (name + variant colors)
+    const variantColors = await Product.find({}, { name: 1, "variants.color": 1, _id: 0 });
+    console.log("\nProduct names with variant colors:");
+    console.log(variantColors);
+
+    // Close connection
+    await mongoose.connection.close();
+    console.log("\nMongoDB connection closed.");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Run the main function
+main();
